@@ -1,0 +1,49 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{\textbf{Selection Rationale for the Academic Events System Architecture}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section*{Abstract}
+This document outlines the reasoning behind the selection of the \textit{Academic Events System} as the subject of implementation, rather than the \textit{Movie Rental System}. The analysis is based on structural features of the respective data models and their alignment with declarative, functional programming methodologies. The Academic Events System was selected due to its data schema and process logic, which support a wider range of design and implementation strategies.
+
+\section{Relational Structure}
+Let the primary entities in a standard Movie Rental System be denoted as $E_M = \{ \text{Customer}, \text{Movie}, \text{Rental} \}$. The associated relationships are straightforward: a customer can initiate multiple rentals; a movie may appear in multiple rentals. This yields a model whose core consists of three interconnected entities with direct mappings.
+
+In contrast, the Academic Events System comprises a broader set of entities: $E_A = \{ \text{Event}, \text{Participant}, \text{Registration}, \text{Category}, \text{Location} \}$. Each event is linked to a specific category and location. A participant registers for an event via a registration record, which holds additional data fields, such as payment and confirmation status. These attributes require additional logic and data constraints, extending the role of the registration entity beyond a simple many-to-many connector.
+
+The model imposes constraints such as:
+\begin{itemize}
+    \item Registration deadline $d_{reg}$ must precede or coincide with the event start date $d_{start}$: $d_{reg} \leq d_{start}$.
+    \item The number of confirmed registrations for a given event $e_i$ must not exceed a specified upper bound, represented by the \texttt{max\_participants} parameter.
+\end{itemize}
+
+These constraints may be implemented at the database level using integrity checks, or within application logic. The data relationships and associated rules allow for multiple points of constraint verification and error handling.
+
+\section{Functional Expression of Logic}
+The design objective was to construct a system where behavior could be specified using declarative constructs. The operations defined within the Academic Events System conform to this pattern. As an example, consider the computation of total revenue from confirmed participants in a specific event $e$:
+
+\[
+f = (\text{sum} \circ \text{map}_{\text{fee}} \circ \text{filter}_{\text{paid}} \circ \text{filter}_{e})
+\]
+
+Here, the function $f$ is a composition of higher-order operations applied to a stream of registration records. The function sequence filters the relevant records and maps them to monetary values, which are then aggregated. The use of immutable data and pure functions aligns with the requirements of functional programming.
+
+Database access follows the same pattern. A reusable abstraction, \texttt{DatabaseOperation<T>}, accepts a lambda expression and passes it to a higher-order function, \texttt{executeWithConnection}, which manages the transactional environment. This encapsulation reduces the need for explicit resource control in user code, allowing the functional logic to remain unencumbered by operational details.
+
+By comparison, the operations in a Movie Rental System involve updates to entity states—such as marking a movie as returned—which are typically modeled as state transitions. Although functional modeling is possible, the nature of the domain leads to simpler data flows and fewer opportunities to structure logic as pure function compositions.
+
+\section{Conclusion}
+The Academic Events System was selected based on the characteristics of its data and behavior models. The relational schema includes multiple interdependent entities and constraints, offering opportunities for implementing logic with a high degree of precision. The system’s requirements allow for a representation using declarative constructs, particularly within a functional programming framework. This supports clearer specification of data transformations and interactions, and offers mechanisms for structuring program behavior without side effects.
+
+\end{document}
